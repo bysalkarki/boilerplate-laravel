@@ -53,16 +53,19 @@ export default function Index({ roles: roleData, search: initialSearch }: { role
     const renderRoleActions = (role: Role) => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                {role.default ? <></> : (
                     <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
                     </Button>
-                )}
             </DropdownMenuTrigger>
             <DropdownMenuContent>
                 {hasPermission('update-role') && (
                     <DropdownMenuItem asChild>
                         <Link href={roles.edit(role).url}>Edit</Link>
+                    </DropdownMenuItem>
+                )}
+                {hasPermission('update-role') && (
+                    <DropdownMenuItem asChild>
+                        <Link href={roles.assignPermissions(role).url}>Assign Permissions</Link>
                     </DropdownMenuItem>
                 )}
                 {hasPermission('delete-role') && (

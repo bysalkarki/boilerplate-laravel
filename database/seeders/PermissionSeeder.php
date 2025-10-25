@@ -24,32 +24,32 @@ final class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $permission = collect($this->permissions())->map(function ($permission) {
+        $permissionsToCreate = collect($this->permissions())->map(function ($permissionModule) {
             $items = [];
             foreach (['create', 'read', 'update', 'delete'] as $action) {
-                $items[] = "{$action}-{$permission}";
+                $permissionName = "{$action}-{$permissionModule}";
+                $items[] = [
+                    'name' => $permissionName,
+                    'guard_name' => 'web',
+                    'module' => $permissionModule,
+                ];
             }
 
             return $items;
         })
-            ->flatten()
+            ->flatten(1)
             ->each(function ($item) {
-                Permission::query()->create(
-                    [
-                        'name' => $item,
-                    ]
-                );
+                Permission::query()->create($item);
             });
 
-        collect($this->roles())->each(function ($role) use ($permission) {
+        collect($this->roles())->each(function ($roleName) {
             $newRole = Role::query()->create([
-                'name' => $role,
+                'name' => $roleName,
                 'guard_name' => 'web',
                 'default' => true,
             ]);
-            $newRole->givePermissionTo($permission->toArray());
+            $newRole->givePermissionTo(Permission::all());
         });
-
     }
 
     private function roles(): array

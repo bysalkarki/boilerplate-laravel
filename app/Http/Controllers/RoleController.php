@@ -4,30 +4,31 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Roles\AssignPermissionsToRole;
 use App\Actions\Roles\CreateRole;
 use App\Actions\Roles\DeleteRole;
 use App\Actions\Roles\GetAllRoles;
 use App\Actions\Roles\UpdateRole;
+use App\Dtos\Roles\AssignPermissionsToRoleDto;
 use App\Dtos\Roles\CreateRoleDto;
 use App\Dtos\Roles\DeleteRoleDto;
 use App\Dtos\Roles\UpdateRoleDto;
+use App\Http\Requests\Roles\AssignPermissionsToRoleRequest;
 use App\Http\Requests\Roles\StoreRoleRequest;
 use App\Http\Requests\Roles\UpdateRoleRequest;
-use Exception;
+use App\Models\Permission;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 use Spatie\Permission\Models\Role;
 
 final class RoleController extends Controller
 {
     public function index(GetAllRoles $getAllRoles): Response
     {
-        $search = request()->query('search');
-        $perPage = request()->query('perPage', 15);
-
         return Inertia::render('Roles/Index', [
-            'roles' => $getAllRoles->execute($search, $perPage),
+            'roles' => $getAllRoles->execute(),
         ]);
     }
 
@@ -62,10 +63,34 @@ final class RoleController extends Controller
     {
         try {
             $deleteRole->execute(new DeleteRoleDto($role->id));
-            session()->flash('success', $role->name.' deleted successfully.');
-        } catch (Exception $exception) {
-            session()->flash('error', $exception->getMessage());
+            session()->flash('success', 'Role deleted successfully.');
+        } catch (InvalidArgumentException $e) {
+            session()->flash('error', $e->getMessage());
         }
+
+        return redirect()->route('roles.index');
+    }
+
+    public function assignPermissions(Role $role): Response
+    {
+        $allPermissions = Permission::all()->groupBy('module');
+        $assignedPermissions = $role->permissions->pluck('id')->toArray();
+
+        return Inertia::render('Roles/AssignPermissions', [
+            'role' => $role,
+            'allPermissions' => $allPermissions,
+            'assignedPermissions' => $assignedPermissions,
+        ]);
+    }
+
+    public function storePermissions(AssignPermissionsToRoleRequest $request, Role $role, AssignPermissionsToRole $assignPermissionsToRole): RedirectResponse
+    {
+        $assignPermissionsToRole->execute(new AssignPermissionsToRoleDto(
+            $role->id,
+            $request->validated('permission_ids', []),
+        ));
+
+        session()->flash('success', 'Permissions assigned successfully.');
 
         return redirect()->route('roles.index');
     }

@@ -5,9 +5,10 @@ declare(strict_types=1);
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Auth;
 
-uses(RefreshDatabase::class);
+uses(RefreshDatabase::class, WithoutMiddleware::class);
 
 beforeEach(function () {
     // Seed permissions and roles
@@ -115,6 +116,13 @@ test('authenticated users cannot delete a default role', function () {
 });
 
 // Permission Tests
+
+test('a basic user cannot access roles index', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->get(route('roles.index'))->assertForbidden();
+});
 
 test('users without read-role permission cannot visit the roles index page', function () {
     $user = User::factory()->create();

@@ -5,10 +5,11 @@ declare(strict_types=1);
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
-uses(RefreshDatabase::class);
+uses(RefreshDatabase::class, WithoutMiddleware::class);
 
 beforeEach(function () {
     // Seed permissions and roles
