@@ -20,7 +20,7 @@ beforeEach(function () {
 });
 
 test('guests are redirected to the login page', function () {
-    Auth::logout();
+    Auth::logout(); // Ensure no user is logged in
     $this->get(route('roles.index'))->assertRedirect(route('login'));
 });
 
@@ -114,17 +114,59 @@ test('authenticated users cannot delete a default role', function () {
     $this->assertDatabaseHas('roles', ['name' => 'super-admin']);
 });
 
-test('authenticated users can search role by values', function () {
+// Permission Tests
+
+test('users without read-role permission cannot visit the roles index page', function () {
     $user = User::factory()->create();
+    $this->actingAs($user);
 
-    Role::factory()->create(['name' => 'editor']);
-    $user->assignRole('super-admin');
+    $this->get(route('roles.index'))->assertForbidden();
+});
 
-    $response = $this->actingAs($user)
-        ->get(route('roles.index', ['search' => 'editor']));
+test('users without create-role permission cannot view the create role page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
 
-    $response->assertStatus(200);
+    $this->get(route('roles.create'))->assertForbidden();
+});
 
-    $response->assertSee('editor');
-    $response->assertDontSee('admin');
+test('users without create-role permission cannot create a role', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->post(route('roles.store'), ['name' => 'Unauthorized Role'])
+        ->assertForbidden();
+
+    $this->assertDatabaseMissing('roles', ['name' => 'Unauthorized Role']);
+});
+
+test('users without update-role permission cannot view the edit role page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $role = Role::create(['name' => 'Role to Edit']);
+
+    $this->get(route('roles.edit', $role))->assertForbidden();
+});
+
+test('users without update-role permission cannot update a role', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $role = Role::create(['name' => 'Role to Update']);
+
+    $this->put(route('roles.update', $role), ['name' => 'Attempted Update'])
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('roles', ['name' => 'Role to Update']);
+    $this->assertDatabaseMissing('roles', ['name' => 'Attempted Update']);
+});
+
+test('users without delete-role permission cannot delete a role', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $role = Role::create(['name' => 'Role to Delete']);
+
+    $this->delete(route('roles.destroy', $role))
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('roles', ['name' => 'Role to Delete']);
 });

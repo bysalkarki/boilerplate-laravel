@@ -16,7 +16,7 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
 
-        User::firstOrCreate(
+        $user = User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
                 'name' => 'Test User',
@@ -30,5 +30,7 @@ final class DatabaseSeeder extends Seeder
                 PermissionSeeder::class,
             ]
         );
+
+        $user->assignRole('super-admin');
     }
 }

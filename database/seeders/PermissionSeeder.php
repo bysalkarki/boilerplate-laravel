@@ -47,8 +47,7 @@ final class PermissionSeeder extends Seeder
                 'guard_name' => 'web',
                 'default' => true,
             ]);
-
-            $newRole->givePermissionTo($permission);
+            $newRole->givePermissionTo($permission->toArray());
         });
 
     }

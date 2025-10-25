@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Hash;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Seed permissions and roles
     $this->seed(Database\Seeders\PermissionSeeder::class);
 
+    // Create an admin user and log them in
     $this->adminUser = User::factory()->create();
     $this->adminUser->assignRole('admin');
     $this->actingAs($this->adminUser);
@@ -178,4 +180,71 @@ test('authenticated users cannot delete a super-admin user', function () {
         ->assertSessionHas('error'); // Assuming the controller catches the exception and adds an error to the session
 
     $this->assertDatabaseHas('users', ['id' => $superAdminUser->id]);
+});
+
+// Permission Tests
+
+test('users without read-user permission cannot visit the users index page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->get(route('users.index'))->assertForbidden();
+});
+
+test('users without create-user permission cannot view the create user page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->get(route('users.create'))->assertForbidden();
+});
+
+test('users without create-user permission cannot create a user', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->post(route('users.store'), [
+        'name' => 'Unauthorized User',
+        'email' => 'unauthorized@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])
+        ->assertForbidden();
+
+    $this->assertDatabaseMissing('users', ['email' => 'unauthorized@example.com']);
+});
+
+test('users without update-user permission cannot view the edit user page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $userToEdit = User::factory()->create();
+
+    $this->get(route('users.edit', $userToEdit))->assertForbidden();
+});
+
+test('users without update-user permission cannot update a user', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $userToUpdate = User::factory()->create();
+
+    $this->put(route('users.update', $userToUpdate), [
+        'name' => 'Attempted Update',
+        'email' => $userToUpdate->email,
+        'password' => '',
+        'password_confirmation' => '',
+    ])
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('users', ['name' => $userToUpdate->name]);
+    $this->assertDatabaseMissing('users', ['name' => 'Attempted Update']);
+});
+
+test('users without delete-user permission cannot delete a user', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $userToDelete = User::factory()->create();
+
+    $this->delete(route('users.destroy', $userToDelete))
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('users', ['id' => $userToDelete->id]);
 });
