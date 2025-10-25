@@ -5,10 +5,9 @@ declare(strict_types=1);
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Auth;
 
-uses(RefreshDatabase::class, WithoutMiddleware::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Seed permissions and roles
@@ -34,6 +33,7 @@ test('authenticated users can view the create role page', function () {
 });
 
 test('authenticated users can create a role', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $this->post(route('roles.store'), ['name' => 'New Role'])
         ->assertRedirect(route('roles.index'))
         ->assertSessionHasNoErrors();
@@ -42,6 +42,7 @@ test('authenticated users can create a role', function () {
 });
 
 test('authenticated users cannot create a role with an empty name', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $this->post(route('roles.store'), ['name' => ''])
         ->assertSessionHasErrors('name');
 
@@ -49,6 +50,7 @@ test('authenticated users cannot create a role with an empty name', function () 
 });
 
 test('authenticated users cannot create a role with a duplicate name', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     Role::create(['name' => 'Existing Role']);
 
     $this->post(route('roles.store'), ['name' => 'Existing Role'])
@@ -66,6 +68,7 @@ test('authenticated users can view the edit role page', function () {
 });
 
 test('authenticated users can update a role', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $role = Role::create(['name' => 'Old Role Name']);
 
     $this->put(route('roles.update', $role), ['name' => 'Updated Role Name'])
@@ -77,6 +80,7 @@ test('authenticated users can update a role', function () {
 });
 
 test('authenticated users cannot update a role with an empty name', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $role = Role::create(['name' => 'Role to Update']);
 
     $this->put(route('roles.update', $role), ['name' => ''])
@@ -86,6 +90,7 @@ test('authenticated users cannot update a role with an empty name', function () 
 });
 
 test('authenticated users cannot update a role with a duplicate name', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     Role::create(['name' => 'Another Role']);
     $role = Role::create(['name' => 'Role to Be Updated']);
 
@@ -97,6 +102,7 @@ test('authenticated users cannot update a role with a duplicate name', function 
 });
 
 test('authenticated users can delete a role', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $role = Role::create(['name' => 'Deletable Role']);
 
     $this->delete(route('roles.destroy', $role))
@@ -107,6 +113,7 @@ test('authenticated users can delete a role', function () {
 });
 
 test('authenticated users cannot delete a default role', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $superAdminRole = Role::where('name', 'super-admin')->first();
 
     $this->delete(route('roles.destroy', $superAdminRole))
@@ -139,6 +146,7 @@ test('users without create-role permission cannot view the create role page', fu
 });
 
 test('users without create-role permission cannot create a role', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
     $this->actingAs($user);
 
@@ -157,6 +165,7 @@ test('users without update-role permission cannot view the edit role page', func
 });
 
 test('users without update-role permission cannot update a role', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
     $this->actingAs($user);
     $role = Role::create(['name' => 'Role to Update']);
@@ -169,6 +178,7 @@ test('users without update-role permission cannot update a role', function () {
 });
 
 test('users without delete-role permission cannot delete a role', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
     $this->actingAs($user);
     $role = Role::create(['name' => 'Role to Delete']);

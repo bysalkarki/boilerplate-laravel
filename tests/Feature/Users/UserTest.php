@@ -5,11 +5,10 @@ declare(strict_types=1);
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
-uses(RefreshDatabase::class, WithoutMiddleware::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Seed permissions and roles
@@ -35,6 +34,7 @@ test('authenticated users can view the create user page', function () {
 });
 
 test('authenticated users can create a user', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $this->post(route('users.store'), [
         'name' => 'New User',
         'email' => 'newuser@example.com',
@@ -51,6 +51,7 @@ test('authenticated users can create a user', function () {
 });
 
 test('authenticated users cannot create a user with invalid data', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $this->post(route('users.store'), [
         'name' => '',
         'email' => 'invalid-email',
@@ -63,6 +64,7 @@ test('authenticated users cannot create a user with invalid data', function () {
 });
 
 test('authenticated users cannot create a user with a duplicate email', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     User::factory()->create(['email' => 'existing@example.com']);
 
     $this->post(route('users.store'), [
@@ -86,6 +88,7 @@ test('authenticated users can view the edit user page', function () {
 });
 
 test('authenticated users can update a user', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create([
         'name' => 'Old Name',
         'email' => 'old@example.com',
@@ -109,6 +112,7 @@ test('authenticated users can update a user', function () {
 });
 
 test('authenticated users can update a user\'s password', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create([
         'password' => Hash::make('old-password'),
     ]);
@@ -127,6 +131,7 @@ test('authenticated users can update a user\'s password', function () {
 });
 
 test('authenticated users cannot update a user with invalid data', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
 
     $this->put(route('users.update', $user), [
@@ -141,6 +146,7 @@ test('authenticated users cannot update a user with invalid data', function () {
 });
 
 test('authenticated users cannot update a user with a duplicate email', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     User::factory()->create(['email' => 'another@example.com']);
     $user = User::factory()->create(['email' => 'user-to-update@example.com']);
 
@@ -156,6 +162,7 @@ test('authenticated users cannot update a user with a duplicate email', function
 });
 
 test('authenticated users can delete a user', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
 
     $this->delete(route('users.destroy', $user))
@@ -166,6 +173,7 @@ test('authenticated users can delete a user', function () {
 });
 
 test('authenticated users cannot delete the currently authenticated user', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $this->delete(route('users.destroy', $this->adminUser))
         ->assertSessionHas('error'); // Assuming the controller catches the exception and adds an error to the session
 
@@ -173,6 +181,7 @@ test('authenticated users cannot delete the currently authenticated user', funct
 });
 
 test('authenticated users cannot delete a super-admin user', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $superAdminRole = Role::where('name', 'super-admin')->first();
     $superAdminUser = User::factory()->create();
     $superAdminUser->assignRole($superAdminRole);
@@ -200,6 +209,7 @@ test('users without create-user permission cannot view the create user page', fu
 });
 
 test('users without create-user permission cannot create a user', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
     $this->actingAs($user);
 
@@ -223,6 +233,7 @@ test('users without update-user permission cannot view the edit user page', func
 });
 
 test('users without update-user permission cannot update a user', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
     $this->actingAs($user);
     $userToUpdate = User::factory()->create();
@@ -240,6 +251,7 @@ test('users without update-user permission cannot update a user', function () {
 });
 
 test('users without delete-user permission cannot delete a user', function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
     $this->actingAs($user);
     $userToDelete = User::factory()->create();
