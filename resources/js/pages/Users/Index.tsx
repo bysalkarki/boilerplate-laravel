@@ -12,10 +12,12 @@ import { MoreHorizontal } from 'lucide-react';
 import * as users from '@/routes/users';
 import { useState, useEffect, useCallback } from 'react';
 import { DataTable } from '@/components/ui/data-table';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Index({ users: userData, search: initialSearch }: { users: Paginated<User>, search?: string }) {
     const { delete: destroy } = useForm();
     const [search, setSearch] = useState(initialSearch || '');
+    const { hasPermission } = usePermissions();
 
     const handleSearch = useCallback(
         (value: string) => {
@@ -60,22 +62,26 @@ export default function Index({ users: userData, search: initialSearch }: { user
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-                <DropdownMenuItem asChild>
-                    <Link href={users.edit(user).url}>Edit</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    onClick={() => {
-                        if (
-                            confirm(
-                                'Are you sure you want to delete this user?'
-                            )
-                        ) {
-                            destroy(users.destroy(user).url);
-                        }
-                    }}
-                >
-                    Delete
-                </DropdownMenuItem>
+                {hasPermission('update-user') && (
+                    <DropdownMenuItem asChild>
+                        <Link href={users.edit(user).url}>Edit</Link>
+                    </DropdownMenuItem>
+                )}
+                {hasPermission('delete-user') && (
+                    <DropdownMenuItem
+                        onClick={() => {
+                            if (
+                                confirm(
+                                    'Are you sure you want to delete this user?'
+                                )
+                            ) {
+                                destroy(users.destroy(user).url);
+                            }
+                        }}
+                    >
+                        Delete
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

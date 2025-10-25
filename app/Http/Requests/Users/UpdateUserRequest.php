@@ -10,12 +10,9 @@ use Illuminate\Validation\Rules\Password;
 
 final class UpdateUserRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true; // TODO: Implement proper authorization (e.g., can('update-user'))
+        return $this->user()->can('update-user');
     }
 
     /**

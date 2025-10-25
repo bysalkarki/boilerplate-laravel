@@ -118,6 +118,7 @@ test('authenticated users can search role by values', function () {
     $user = User::factory()->create();
 
     Role::factory()->create(['name' => 'editor']);
+    $user->assignRole('super-admin');
 
     $response = $this->actingAs($user)
         ->get(route('roles.index', ['search' => 'editor']));

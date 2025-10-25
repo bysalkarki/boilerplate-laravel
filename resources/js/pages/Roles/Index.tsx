@@ -12,10 +12,12 @@ import { MoreHorizontal } from 'lucide-react';
 import * as roles from '@/routes/roles';
 import { useState, useEffect, useCallback } from 'react';
 import { DataTable } from '@/components/ui/data-table';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Index({ roles: roleData, search: initialSearch }: { roles: Paginated<Role>, search?: string }) {
     const { delete: destroy } = useForm();
     const [search, setSearch] = useState(initialSearch || '');
+    const { hasPermission } = usePermissions();
 
     const handleSearch = useCallback(
         (value: string) => {
@@ -58,22 +60,26 @@ export default function Index({ roles: roleData, search: initialSearch }: { role
                 )}
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-                <DropdownMenuItem asChild>
-                    <Link href={roles.edit(role).url}>Edit</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    onClick={() => {
-                        if (
-                            confirm(
-                                'Are you sure you want to delete this role?'
-                            )
-                        ) {
-                            destroy(roles.destroy(role).url);
-                        }
-                    }}
-                >
-                    Delete
-                </DropdownMenuItem>
+                {hasPermission('update-role') && (
+                    <DropdownMenuItem asChild>
+                        <Link href={roles.edit(role).url}>Edit</Link>
+                    </DropdownMenuItem>
+                )}
+                {hasPermission('delete-role') && (
+                    <DropdownMenuItem
+                        onClick={() => {
+                            if (
+                                confirm(
+                                    'Are you sure you want to delete this role?'
+                                )
+                            ) {
+                                destroy(roles.destroy(role).url);
+                            }
+                        }}
+                    >
+                        Delete
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

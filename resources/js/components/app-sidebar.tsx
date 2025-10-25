@@ -17,30 +17,39 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { LayoutGrid, Shield, Users } from 'lucide-react';
 import AppLogo from './app-logo';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Roles',
-        href: roles.index().url,
-        icon: Shield,
-    },
-    {
-        title: 'Users',
-        href: users.index().url,
-        icon: Users,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-
-];
+import { usePermissions } from '@/hooks/usePermissions';
 
 export function AppSidebar() {
+    const { hasPermission } = usePermissions();
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+
+    if (hasPermission('read-role')) {
+        mainNavItems.push({
+            title: 'Roles',
+            href: roles.index().url,
+            icon: Shield,
+        });
+    }
+
+    if (hasPermission('read-user')) {
+        mainNavItems.push({
+            title: 'Users',
+            href: users.index().url,
+            icon: Users,
+        });
+    }
+
+    const footerNavItems: NavItem[] = [
+
+    ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>

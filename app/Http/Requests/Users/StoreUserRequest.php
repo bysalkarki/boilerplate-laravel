@@ -9,12 +9,9 @@ use Illuminate\Validation\Rules\Password;
 
 final class StoreUserRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true; // TODO: Implement proper authorization (e.g., can('create-user'))
+        return $this->user()->can('create-user');
     }
 
     /**
