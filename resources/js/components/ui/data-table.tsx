@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
+import clsx from 'clsx';
 
 interface Column<T> {
     header: string;
@@ -30,55 +31,59 @@ interface DataTableProps<T> {
     title: string;
 }
 
-export function DataTable<T extends { id: number }>({ // Added extends { id: number } to ensure T has an id
-    columns,
-    data,
-    paginationLinks,
-    search,
-    onSearchChange,
-    createUrl,
-    createLabel,
-    renderActions,
-    resourceName,
-    title,
-}: DataTableProps<T>) {
+export function DataTable<T extends { id: number }>({
+                                                        columns,
+                                                        data,
+                                                        paginationLinks,
+                                                        search,
+                                                        onSearchChange,
+                                                        createUrl,
+                                                        createLabel,
+                                                        renderActions,
+                                                        resourceName,
+                                                        title,
+                                                    }: DataTableProps<T>) {
     const { delete: destroy } = useForm();
 
-    const appendSearchParam = useCallback((url: string | null) => {
-        if (!url) return '#';
-        const urlObj = new URL(url);
-        if (search) {
-            urlObj.searchParams.set('search', search);
-        } else {
-            urlObj.searchParams.delete('search');
-        }
-        return urlObj.toString();
-    }, [search]);
+    const appendSearchParam = useCallback(
+        (url: string | null) => {
+            if (!url) return '#';
+            const urlObj = new URL(url);
+            if (search) {
+                urlObj.searchParams.set('search', search);
+            } else {
+                urlObj.searchParams.delete('search');
+            }
+            return urlObj.toString();
+        },
+        [search]
+    );
 
     return (
-        <>
-            <div className="flex items-center justify-between p-2">
+        <div className="space-y-4">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2">
                 <h1 className="text-2xl font-semibold">{title}</h1>
-                <Button asChild>
-                    <Link href={createUrl}>{createLabel}</Link>
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Input
+                        placeholder={`Search ${resourceName.toLowerCase()}s...`}
+                        value={search}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        className="max-w-sm"
+                    />
+                    <Button asChild>
+                        <Link href={createUrl}>{createLabel}</Link>
+                    </Button>
+                </div>
             </div>
 
-            <div className="flex items-center justify-between p-2">
-                <Input
-                    placeholder={`Search ${resourceName.toLowerCase()}s...`}
-                    className="max-w-sm"
-                    value={search}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                />
-            </div>
-
-            <div className="m-4 rounded-md border">
-                <Table>
+            {/* Table */}
+            <div className="overflow-x-auto rounded-md border">
+                <Table className="min-w-full">
                     <TableHeader>
                         <TableRow>
                             {columns.map((column, index) => (
-                                <TableHead key={index} className="px-4 py-2">
+                                <TableHead key={index} className="px-4 py-2 text-left">
                                     {column.header}
                                 </TableHead>
                             ))}
@@ -86,38 +91,48 @@ export function DataTable<T extends { id: number }>({ // Added extends { id: num
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {data.map((item) => (
-                            <TableRow key={item.id}>
-                                {columns.map((column, index) => (
-                                    <TableCell key={index} className="px-4 py-2">
-                                        {column.accessor(item)}
-                                    </TableCell>
-                                ))}
-                                <TableCell className="px-4 py-2">
-                                    {renderActions(item)}
+                        {data.length > 0 ? (
+                            data.map((item) => (
+                                <TableRow key={item.id} className="hover:bg-gray-50">
+                                    {columns.map((column, index) => (
+                                        <TableCell key={index} className="px-4 py-2">
+                                            {column.accessor(item)}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell className="px-4 py-2">{renderActions(item)}</TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={columns.length + 1} className="text-center py-6">
+                                    No {resourceName.toLowerCase()}s found.
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        )}
                     </TableBody>
                 </Table>
             </div>
 
-            <div className="m-2 flex items-center justify-end">
-                <div className="flex items-center space-x-2">
-                    {paginationLinks.map((link, index) => (
-                        <Link
-                            key={index}
-                            href={appendSearchParam(link.url)}
-                            className={`px-3 py-1 text-sm rounded-md ${
-                                link.active
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-secondary text-secondary-foreground'
-                            }`}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    ))}
+            {/* Pagination */}
+            {paginationLinks.length > 1 && (
+                <div className="flex justify-end p-2">
+                    <div className="flex flex-wrap gap-2">
+                        {paginationLinks.map((link, index) => (
+                            <Link
+                                key={index}
+                                href={appendSearchParam(link.url)}
+                                className={clsx(
+                                    'px-3 py-1 rounded-md border text-sm hover:bg-primary hover:text-primary-foreground transition-colors',
+                                    link.active
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-white text-gray-700'
+                                )}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
+                    </div>
                 </div>
-            </div>
-        </>
+            )}
+        </div>
     );
 }
