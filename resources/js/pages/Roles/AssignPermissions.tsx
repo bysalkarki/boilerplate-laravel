@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/input-error';
 import * as roles from '@/routes/roles';
 import { Permission, Role } from '@/types';
-import { useState } from 'react';
+import { useCallback, FormEvent, memo } from 'react';
 
 interface AssignPermissionsProps {
     role: Role;
@@ -14,18 +14,27 @@ interface AssignPermissionsProps {
     assignedPermissions: number[];
 }
 
-export default function AssignPermissions({ role, allPermissions, assignedPermissions }: AssignPermissionsProps) {
+export default function AssignPermissions({
+                                              role,
+                                              allPermissions,
+                                              assignedPermissions,
+                                          }: AssignPermissionsProps) {
     const { data, setData, put, processing, errors } = useForm({
         permission_ids: assignedPermissions,
     });
 
     const handleCheckboxChange = (permissionId: number, checked: boolean) => {
-        setData('permission_ids', (prev) =>
-            checked ? [...prev, permissionId] : prev.filter((id) => id !== permissionId)
+        const current = Array.isArray(data.permission_ids) ? data.permission_ids : [];
+        setData(
+            'permission_ids',
+            checked
+                ? [...current, permissionId]
+                : current.filter((id) => id !== permissionId)
         );
     };
 
-    const submit = (e: React.FormEvent) => {
+
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         put(roles.storePermissions(role).url);
     };
@@ -33,59 +42,90 @@ export default function AssignPermissions({ role, allPermissions, assignedPermis
     return (
         <AppLayout
             breadcrumbs={[
-                {
-                    title: 'Roles',
-                    href: roles.index().url,
-                },
-                {
-                    title: role.name,
-                    href: roles.edit(role).url,
-                },
-                {
-                    title: 'Assign Permissions',
-                    href: roles.assignPermissions(role).url,
-                },
+                { title: 'Roles', href: roles.index().url },
+                { title: role.name, href: roles.edit(role).url },
+                { title: 'Assign Permissions', href: roles.assignPermissions(role).url },
             ]}
         >
             <Head title={`Assign Permissions to ${role.name}`} />
 
-            <div className="flex items-center justify-between p-2">
-                <h1 className="text-2xl font-semibold">Assign Permissions to {role.name}</h1>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                    Assign Permissions to <span className="font-bold">{role.name}</span>
+                </h1>
+                <Button asChild variant="outline">
+                    <Link href={roles.index().url}>Back</Link>
+                </Button>
             </div>
 
-            <div className="m-4 rounded-md border p-4">
-                <form onSubmit={submit} className="space-y-4">
-                    {Object.entries(allPermissions).map(([moduleName, permissions]) => (
-                        <div key={moduleName} className="border p-3 rounded-md">
-                            <h3 className="text-lg font-semibold capitalize mb-2">{moduleName}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {permissions.map((permission) => (
-                                    <div key={permission.id} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={`permission-${permission.id}`}
-                                            checked={data.permission_ids.includes(permission.id)}
-                                            onCheckedChange={(checked) =>
-                                                handleCheckboxChange(permission.id, checked as boolean)
-                                            }
-                                        />
-                                        <Label htmlFor={`permission-${permission.id}`}>
-                                            {permission.name}
-                                        </Label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {Object.entries(allPermissions).map(([moduleName, permissions]) => (
+                    <ModuleSection
+                        key={moduleName}
+                        moduleName={moduleName}
+                        permissions={permissions}
+                        selected={data.permission_ids}
+                        onToggle={handleCheckboxChange}
+                    />
+                ))}
 
-                    <InputError message={errors.permission_ids} className="mt-2" />
+                {errors.permission_ids && (
+                    <InputError message={errors.permission_ids} className="text-sm" />
+                )}
 
-                    <div className="flex items-center justify-end mt-4">
-                        <Button className="ms-4" disabled={processing}>
-                            Save Permissions
-                        </Button>
-                    </div>
-                </form>
-            </div>
+                <div className="flex justify-end pt-4 border-t">
+                    <Button type="submit" disabled={processing}>
+                        {processing ? 'Saving...' : 'Save Permissions'}
+                    </Button>
+                </div>
+            </form>
         </AppLayout>
     );
 }
+
+/* ----------------------------- Subcomponent ----------------------------- */
+
+interface ModuleSectionProps {
+    moduleName: string;
+    permissions: Permission[];
+    selected: number[];
+    onToggle: (id: number, checked: boolean) => void;
+}
+
+const ModuleSection = memo(function ModuleSection({
+                                                      moduleName,
+                                                      permissions,
+                                                      selected,
+                                                      onToggle,
+                                                  }: ModuleSectionProps) {
+    return (
+        <section className="rounded-lg border p-4 shadow-sm bg-card/50">
+            <h3 className="text-lg font-semibold mb-3 capitalize text-primary">
+                {moduleName}
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {permissions.map((permission) => {
+                    const checked = selected.includes(permission.id);
+                    return (
+                        <label
+                            key={permission.id}
+                            htmlFor={`perm-${permission.id}`}
+                            className="flex items-center space-x-2 hover:bg-muted/50 p-2 rounded-md cursor-pointer transition"
+                        >
+                            <Checkbox
+                                id={`perm-${permission.id}`}
+                                checked={checked}
+                                onCheckedChange={(checked) =>
+                                    onToggle(permission.id, checked as boolean)
+                                }
+                            />
+                            <span className="text-sm text-foreground/90">
+                                {permission.name}
+                            </span>
+                        </label>
+                    );
+                })}
+            </div>
+        </section>
+    );
+});
