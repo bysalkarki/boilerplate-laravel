@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 use App\Models\User;
 
+beforeEach(function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
+});
+
 test('profile page is displayed', function () {
     $user = User::factory()->create();
 

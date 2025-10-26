@@ -5,19 +5,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import * as users from '@/routes/users';
-import { User } from '@/types';
+import { Role, User } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export default function Edit({ user }: { user: User }) {
+export default function Edit({ user, roles }: { user: User, roles: Role[] }) {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
+        role_id: user.roles[0]?.id.toString() || '',
+    });
+
+    const { data: passwordData, setData: setPasswordData, put: putPassword, processing: passwordProcessing, errors: passwordErrors, reset } = useForm({
         password: '',
         password_confirmation: '',
     });
 
-    const submit = (e: React.FormEvent) => {
+    const submitUserDetails = (e: React.FormEvent) => {
         e.preventDefault();
         put(users.update(user).url);
+    };
+
+    const submitPassword = (e: React.FormEvent) => {
+        e.preventDefault();
+        putPassword(users.updatePassword(user).url, {
+            onSuccess: () => reset(),
+        });
     };
 
     return (
@@ -40,65 +53,103 @@ export default function Edit({ user }: { user: User }) {
             </div>
 
             <div className="m-4 rounded-md border p-4">
-                <form onSubmit={submit} className="space-y-4">
-                    <div>
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                            id="name"
-                            type="text"
-                            className="mt-1 block w-full"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            required
-                            autoFocus
-                        />
-                        <InputError message={errors.name} className="mt-2" />
-                    </div>
+                <Tabs defaultValue="details">
+                    <TabsList>
+                        <TabsTrigger value="details">User Details</TabsTrigger>
+                        <TabsTrigger value="password">Update Password</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="details">
+                        <form onSubmit={submitUserDetails} className="space-y-4 p-4">
+                            <div>
+                                <Label htmlFor="name">Name</Label>
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    className="mt-1 block w-full"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    required
+                                    autoFocus
+                                />
+                                <InputError message={errors.name} className="mt-2" />
+                            </div>
 
-                    <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            className="mt-1 block w-full"
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
-                            required
-                        />
-                        <InputError message={errors.email} className="mt-2" />
-                    </div>
+                            <div>
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    className="mt-1 block w-full"
+                                    value={data.email}
+                                    onChange={(e) => setData('email', e.target.value)}
+                                    required
+                                />
+                                <InputError message={errors.email} className="mt-2" />
+                            </div>
 
-                    <div>
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            className="mt-1 block w-full"
-                            value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Leave blank to keep current password"
-                        />
-                        <InputError message={errors.password} className="mt-2" />
-                    </div>
+                            <div>
+                                <Label htmlFor="role_id">Role</Label>
+                                <Select
+                                    onValueChange={(value) => setData('role_id', value)}
+                                    value={data.role_id}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {roles.map((role) => (
+                                            <SelectItem key={role.id} value={String(role.id)}>
+                                                {role.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.role_id} className="mt-2" />
+                            </div>
 
-                    <div>
-                        <Label htmlFor="password_confirmation">Confirm Password</Label>
-                        <Input
-                            id="password_confirmation"
-                            type="password"
-                            className="mt-1 block w-full"
-                            value={data.password_confirmation}
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
-                        />
-                        <InputError message={errors.password_confirmation} className="mt-2" />
-                    </div>
+                            <div className="flex items-center justify-end mt-4">
+                                <Button className="ms-4" disabled={processing}>
+                                    Update Details
+                                </Button>
+                            </div>
+                        </form>
+                    </TabsContent>
+                    <TabsContent value="password">
+                        <form onSubmit={submitPassword} className="space-y-4 p-4">
+                            <div>
+                                <Label htmlFor="password">New Password</Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    className="mt-1 block w-full"
+                                    value={passwordData.password}
+                                    onChange={(e) => setPasswordData('password', e.target.value)}
+                                    required
+                                />
+                                <InputError message={passwordErrors.password} className="mt-2" />
+                            </div>
 
-                    <div className="flex items-center justify-end mt-4">
-                        <Button className="ms-4" disabled={processing}>
-                            Update
-                        </Button>
-                    </div>
-                </form>
+                            <div>
+                                <Label htmlFor="password_confirmation">Confirm New Password</Label>
+                                <Input
+                                    id="password_confirmation"
+                                    type="password"
+                                    className="mt-1 block w-full"
+                                    value={passwordData.password_confirmation}
+                                    onChange={(e) => setPasswordData('password_confirmation', e.target.value)}
+                                    required
+                                />
+                                <InputError message={passwordErrors.password_confirmation} className="mt-2" />
+                            </div>
+
+                            <div className="flex items-center justify-end mt-4">
+                                <Button className="ms-4" disabled={passwordProcessing}>
+                                    Update Password
+                                </Button>
+                            </div>
+                        </form>
+                    </TabsContent>
+                </Tabs>
             </div>
         </AppLayout>
     );

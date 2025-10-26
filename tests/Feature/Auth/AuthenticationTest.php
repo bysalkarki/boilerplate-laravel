@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 
+beforeEach(function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
+});
+
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 

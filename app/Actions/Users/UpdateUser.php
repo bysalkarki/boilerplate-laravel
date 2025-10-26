@@ -16,10 +16,8 @@ final class UpdateUser
             'email' => $updateUserDto->email,
         ]);
 
-        if ($updateUserDto->password) {
-            $user->update([
-                'password' => bcrypt($updateUserDto->password),
-            ]);
+        if ($updateUserDto->roleId) {
+            $user->syncRoles([$updateUserDto->roleId]);
         }
 
         return $user;

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     // Seed permissions and roles
     $this->seed(Database\Seeders\PermissionSeeder::class);
 

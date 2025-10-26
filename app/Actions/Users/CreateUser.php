@@ -11,11 +11,14 @@ final class CreateUser
 {
     public function execute(CreateUserDto $data): User
     {
-
-        return User::query()->create([
+        $user = User::query()->create([
             'name' => $data->name,
             'email' => $data->email,
             'password' => bcrypt($data->password),
         ]);
+
+        $user->assignRole($data->roleId);
+
+        return $user;
     }
 }

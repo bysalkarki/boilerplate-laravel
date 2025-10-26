@@ -6,12 +6,9 @@ namespace App\Dtos\Users;
 
 use SensitiveParameter;
 
-final class CreateUserDto
+final class UpdateUserPasswordDto
 {
     public function __construct(
-        public string $name,
-        public string $email,
         #[SensitiveParameter] public string $password,
-        public int $roleId,
     ) {}
 }

@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
 
+beforeEach(function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
+});
+
 test('sends verification notification', function () {
     Notification::fake();
 

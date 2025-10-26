@@ -5,6 +5,10 @@ declare(strict_types=1);
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+beforeEach(function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
+});
+
 test('password update page is displayed', function () {
     $user = User::factory()->create();
 

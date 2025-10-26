@@ -12,6 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [UserController::class, 'store'])->name('store')->middleware('permission:create-user');
         Route::get('{user}/edit', [UserController::class, 'edit'])->name('edit')->middleware('permission:update-user');
         Route::put('{user}', [UserController::class, 'update'])->name('update')->middleware('permission:update-user');
+        Route::put('{user}/password', [UserController::class, 'updatePassword'])->name('update-password')->middleware('permission:update-user');
         Route::delete('{user}', [UserController::class, 'destroy'])->name('destroy')->middleware('permission:delete-user');
     });
 });

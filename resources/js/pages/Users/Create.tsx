@@ -5,13 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
 import * as users from '@/routes/users';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Role } from '@/types';
 
-export default function Create() {
+export default function Create({ roles }: { roles: Role[] }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        role_id: '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -65,6 +68,26 @@ export default function Create() {
                             required
                         />
                         <InputError message={errors.email} className="mt-2" />
+                    </div>
+
+                    <div>
+                        <Label htmlFor="role_id">Role</Label>
+                        <Select
+                            onValueChange={(value) => setData('role_id', value)}
+                            value={data.role_id}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {roles.map((role) => (
+                                    <SelectItem key={role.id} value={String(role.id)}>
+                                        {role.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <InputError message={errors.role_id} className="mt-2" />
                     </div>
 
                     <div>

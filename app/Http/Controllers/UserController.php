@@ -8,10 +8,13 @@ use App\Actions\Users\CreateUser;
 use App\Actions\Users\DeleteUser;
 use App\Actions\Users\GetAllUsers;
 use App\Actions\Users\UpdateUser;
+use App\Actions\Users\UpdateUserPassword;
 use App\Dtos\Users\CreateUserDto;
 use App\Dtos\Users\DeleteUserDto;
 use App\Dtos\Users\UpdateUserDto;
+use App\Dtos\Users\UpdateUserPasswordDto;
 use App\Http\Requests\Users\StoreUserRequest;
+use App\Http\Requests\Users\UpdateUserPasswordRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -34,7 +37,9 @@ final class UserController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Users/Create');
+        return Inertia::render('Users/Create', [
+            'roles' => \App\Models\Role::all(['id', 'name']),
+        ]);
     }
 
     public function store(StoreUserRequest $request, CreateUser $createUser): RedirectResponse
@@ -42,7 +47,8 @@ final class UserController extends Controller
         $createUser->execute(new CreateUserDto(
             $request->validated('name'),
             $request->validated('email'),
-            $request->validated('password')
+            $request->validated('password'),
+            $request->validated('role_id'),
         ));
 
         return redirect()->route('users.index');
@@ -51,7 +57,8 @@ final class UserController extends Controller
     public function edit(User $user): Response
     {
         return Inertia::render('Users/Edit', [
-            'user' => $user,
+            'user' => $user->load('roles'),
+            'roles' => \App\Models\Role::all(['id', 'name']),
         ]);
     }
 
@@ -60,7 +67,7 @@ final class UserController extends Controller
         $updateUser->execute($user, new UpdateUserDto(
             $request->validated('name'),
             $request->validated('email'),
-            $request->validated('password')
+            $request->validated('role_id'),
         ));
         session()->flash('success', 'User updated successfully.');
 
@@ -77,5 +84,16 @@ final class UserController extends Controller
         }
 
         return redirect()->route('users.index');
+    }
+
+    public function updatePassword(UpdateUserPasswordRequest $request, User $user, UpdateUserPassword $updateUserPassword): RedirectResponse
+    {
+        $updateUserPassword->execute($user, new UpdateUserPasswordDto(
+            $request->validated('password')
+        ));
+
+        session()->flash('success', 'User password updated successfully.');
+
+        return redirect()->route('users.edit', $user);
     }
 }

@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+beforeEach(function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
+});
+
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
 

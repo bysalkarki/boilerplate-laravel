@@ -6,11 +6,11 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     // Seed permissions and roles
     $this->seed(Database\Seeders\PermissionSeeder::class);
 
@@ -40,6 +40,7 @@ test('authenticated users can create a user', function () {
         'email' => 'newuser@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'role_id' => Role::factory()->create()->id,
     ])
         ->assertRedirect(route('users.index'))
         ->assertSessionHasNoErrors();
@@ -111,25 +112,6 @@ test('authenticated users can update a user', function () {
     $this->assertDatabaseMissing('users', ['email' => 'old@example.com']);
 });
 
-test('authenticated users can update a user\'s password', function () {
-    $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
-    $user = User::factory()->create([
-        'password' => Hash::make('old-password'),
-    ]);
-
-    $this->put(route('users.update', $user), [
-        'name' => $user->name,
-        'email' => $user->email,
-        'password' => 'new-password',
-        'password_confirmation' => 'new-password',
-    ])
-        ->assertRedirect(route('users.index'))
-        ->assertSessionHasNoErrors();
-
-    $updatedUser = User::find($user->id);
-    expect(Hash::check('new-password', $updatedUser->password))->toBeTrue();
-});
-
 test('authenticated users cannot update a user with invalid data', function () {
     $this->withoutMiddleware(App\Http\Middleware\VerifyCsrfToken::class);
     $user = User::factory()->create();
@@ -137,10 +119,8 @@ test('authenticated users cannot update a user with invalid data', function () {
     $this->put(route('users.update', $user), [
         'name' => '',
         'email' => 'invalid-email',
-        'password' => 'password',
-        'password_confirmation' => 'wrong',
     ])
-        ->assertSessionHasErrors(['name', 'email', 'password']);
+        ->assertSessionHasErrors(['name', 'email']);
 
     $this->assertDatabaseHas('users', ['id' => $user->id, 'email' => $user->email]);
 });
