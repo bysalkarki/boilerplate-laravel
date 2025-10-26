@@ -18,6 +18,7 @@ use App\Http\Requests\Roles\StoreRoleRequest;
 use App\Http\Requests\Roles\UpdateRoleRequest;
 use App\Models\Permission;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
@@ -25,10 +26,13 @@ use Spatie\Permission\Models\Role;
 
 final class RoleController extends Controller
 {
-    public function index(GetAllRoles $getAllRoles): Response
+    public function index(Request $request, GetAllRoles $getAllRoles): Response
     {
         return Inertia::render('Roles/Index', [
-            'roles' => $getAllRoles->execute(),
+            'roles' => $getAllRoles->execute(
+                $request->query('search'),
+                (int) $request->query('per_page', 15),
+            ),
         ]);
     }
 
