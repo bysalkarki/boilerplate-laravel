@@ -67,7 +67,7 @@ final class UserController extends Controller
         $updateUser->execute($user, new UpdateUserDto(
             $request->validated('name'),
             $request->validated('email'),
-            $request->validated('role_id'),
+            (int) $request->validated('role_id'),
         ));
         session()->flash('success', 'User updated successfully.');
 
