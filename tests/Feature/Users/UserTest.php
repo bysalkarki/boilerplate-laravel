@@ -43,6 +43,7 @@ test('authenticated users can create a user', function () {
         'role_id' => Role::factory()->create()->id,
     ])
         ->assertRedirect(route('users.index'))
+        ->assertSessionHas('success')
         ->assertSessionHasNoErrors();
 
     $this->assertDatabaseHas('users', [

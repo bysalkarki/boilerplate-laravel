@@ -48,8 +48,10 @@ final class UserController extends Controller
             $request->validated('name'),
             $request->validated('email'),
             $request->validated('password'),
-            $request->validated('role_id'),
+            (int) $request->validated('role_id'),
         ));
+
+        session()->flash('success', 'User created successfully.');
 
         return redirect()->route('users.index');
     }
