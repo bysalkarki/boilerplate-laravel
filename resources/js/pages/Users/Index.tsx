@@ -52,6 +52,10 @@ export default function Index({ users: userData, search: initialSearch }: { user
             header: 'Email',
             accessor: (user: User) => user.email,
         },
+        {
+            header: 'Role',
+            accessor: (user: User) => user.roles?.map(item => item.name).join(' ,'),
+        },
     ];
 
     const renderUserActions = (user: User) => (
